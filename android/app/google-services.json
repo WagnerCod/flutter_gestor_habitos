@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "544644543277",
+    "project_id": "flu-gestor-habitos",
+    "storage_bucket": "flu-gestor-habitos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:544644543277:android:039708887ff25fe57f19a4",
+        "android_client_info": {
+          "package_name": "com.example.flutter_gestor_habitos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBj6ni7Ww_Cbhvxb6D5t1NaBaoQ3eUc1Mk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
