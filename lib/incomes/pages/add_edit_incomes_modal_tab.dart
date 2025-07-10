@@ -3,56 +3,58 @@ import 'package:intl/intl.dart'; // Para formatação de data
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para Timestamp
 
 import '../../widgets_utils/clear_field.dart'; // Importe seu widget ClearField
-import '../service/expense_service.dart'; // Importe o ExpenseService
-import '../models/expenses_model.dart'; // Importe o DespesaModel
+import '../models/incomes.model.dart'; // Importe o ReceitaModel
+import '../services/incomes.service.dart'; // Importe o ReceitaService
 
 // O modal será um StatefulWidget para gerenciar o estado dos campos do formulário.
-class AddEditExpenseModal extends StatefulWidget {
-  // Parâmetro opcional para edição: o modelo completo da despesa, se for edição.
-  final DespesaModel? despesaParaEditar;
+class AddEditReceitaModal extends StatefulWidget {
+  // Parâmetro opcional para edição: o modelo completo da receita, se for edição.
+  final ReceitaModel? receitaParaEditar;
 
-  const AddEditExpenseModal({super.key, this.despesaParaEditar});
+  const AddEditReceitaModal({
+    // Construtor corrigido e alinhado com o nome da classe
+    super.key,
+    this.receitaParaEditar,
+  });
 
   @override
-  State<AddEditExpenseModal> createState() => _AddEditExpenseModalState();
+  State<AddEditReceitaModal> createState() => _AddEditReceitaModalState(); // Nome do State corrigido
 }
 
-class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
-  // Controladores para os campos de texto (NOMES EM PORTUGUÊS).
+class _AddEditReceitaModalState extends State<AddEditReceitaModal> {
+  // Nome do State corrigido
+  // Controladores para os campos de texto.
   final TextEditingController _descricaoController = TextEditingController();
   final TextEditingController _valorController = TextEditingController();
 
-  // Variáveis de estado para o formulário (NOMES EM PORTUGUÊS).
-  String _categoriaSelecionada = 'Alimentação'; // Categoria padrão.
-  DateTime _dataSelecionada = DateTime.now(); // Data padrão.
-  bool _isLoading = false; // Indicador de carregamento.
+  // Variáveis de estado para o formulário.
+  String _categoriaSelecionada = 'Salário'; // Categoria padrão para receitas
+  DateTime _dataSelecionada = DateTime.now(); // Data padrão
+  bool _isLoading = false; // Indicador de carregamento
 
-  // Instância do serviço de despesas.
-  final ExpenseService _expenseService = ExpenseService();
+  // Instância do serviço de receitas
+  final ReceitaService _receitaService = ReceitaService();
 
-  // Lista de categorias de despesas (conforme CU06).
+  // Lista de categorias de receitas (conforme CU09).
   final List<String> _categorias = [
-    'Alimentação',
-    'Transporte',
-    'Saúde',
-    'Moradia',
-    'Educação',
-    'Lazer',
+    'Salário',
+    'Freelance',
+    'Investimentos',
+    'Presente',
     'Outros',
   ];
 
   @override
   void initState() {
     super.initState();
-    // Se 'despesaParaEditar' não for nula, estamos no modo de edição. Pré-preenche os campos.
-    if (widget.despesaParaEditar != null) {
-      _descricaoController.text = widget.despesaParaEditar!.descricao;
-      // Formata o valor para exibir com vírgula se necessário.
-      _valorController.text = widget.despesaParaEditar!.valor
+    // Se 'receitaParaEditar' não for nula, estamos no modo de edição. Pré-preenche os campos.
+    if (widget.receitaParaEditar != null) {
+      _descricaoController.text = widget.receitaParaEditar!.descricao;
+      _valorController.text = widget.receitaParaEditar!.valor
           .toString()
-          .replaceAll('.', ',');
-      _categoriaSelecionada = widget.despesaParaEditar!.categoria;
-      _dataSelecionada = widget.despesaParaEditar!.data;
+          .replaceAll('.', ','); // Formata para PT-BR
+      _categoriaSelecionada = widget.receitaParaEditar!.categoria;
+      _dataSelecionada = widget.receitaParaEditar!.data;
     }
   }
 
@@ -78,19 +80,13 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
-              primary:
-                  Theme.of(
-                    context,
-                  ).colorScheme.primary, // Cor principal do tema
-              onPrimary: Colors.white, // Cor do texto/ícones na cor principal
-              onSurface: Colors.black, // Cor do texto no surface (dias do mês)
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor:
-                    Theme.of(
-                      context,
-                    ).colorScheme.primary, // Cor dos botões (OK, CANCELAR)
+                foregroundColor: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -105,17 +101,16 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
     }
   }
 
-  // Método para lidar com o salvamento ou atualização da despesa.
-  Future<void> _handleSalvarDespesa() async {
+  // Método para lidar com o salvamento ou atualização da receita.
+  Future<void> _handleSalvarReceita() async {
     // Tira o foco para fechar o teclado
     FocusScope.of(context).unfocus();
 
-    // Validação dos campos (CU06 e CU07)
+    // Validação dos campos (CU09 e CU10)
     if (_descricaoController.text.trim().isEmpty) {
       _mostrarSnackBar('A descrição é obrigatória.', Colors.red);
       return;
     }
-    // Trata vírgula como separador decimal para o valor
     final double? valor = double.tryParse(
       _valorController.text.replaceAll(',', '.'),
     );
@@ -131,30 +126,28 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
       _isLoading = true; // Ativa o indicador de carregamento
     });
 
-    String? mensagemErro; // Renomeado para português
-    if (widget.despesaParaEditar == null) {
-      // MODO ADICIONAR NOVA DESPESA
-      mensagemErro = await _expenseService.adicionarDespesa(
+    String? mensagemErro;
+    if (widget.receitaParaEditar == null) {
+      // MODO ADICIONAR NOVA RECEITA
+      mensagemErro = await _receitaService.adicionarReceita(
         descricao: _descricaoController.text.trim(),
         valor: valor,
         categoria: _categoriaSelecionada,
         data: _dataSelecionada,
       );
     } else {
-      // MODO EDITAR DESPESA EXISTENTE (CU07)
-      final Map<String, dynamic> dadosAtualizados = {
-        // Renomeado para português
-        'descricao': _descricaoController.text.trim(),
-        'valor': valor,
-        'categoria': _categoriaSelecionada,
-        'data': Timestamp.fromDate(_dataSelecionada),
-        // 'createdAt' e 'usuarioId' não precisam ser atualizados aqui.
-        // O despesaParaEditar já contém o id.
-      };
+      // MODO EDITAR RECEITA EXISTENTE (CU10)
+      // Cria um novo ReceitaModel com os dados atualizados do formulário
+      final ReceitaModel receitaAtualizada = widget.receitaParaEditar!.copyWith(
+        descricao: _descricaoController.text.trim(),
+        valor: valor,
+        categoria: _categoriaSelecionada,
+        data: _dataSelecionada,
+      );
 
-      mensagemErro = await _expenseService.atualizarDespesa(
-        idDespesa: widget.despesaParaEditar!.id, // Passa o ID da despesa
-        dadosAtualizados: dadosAtualizados,
+      mensagemErro = await _receitaService.atualizarReceita(
+        idReceita: widget.receitaParaEditar!.id, // Passa o ID da receita
+        receitaAtualizada: receitaAtualizada,
       );
     }
 
@@ -164,9 +157,9 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
 
     if (mensagemErro == null) {
       _mostrarSnackBar(
-        widget.despesaParaEditar == null
-            ? 'Despesa adicionada com sucesso!'
-            : 'Despesa atualizada com sucesso!',
+        widget.receitaParaEditar == null
+            ? 'Receita adicionada com sucesso!'
+            : 'Receita atualizada com sucesso!',
         Colors.green,
       );
       Navigator.of(context).pop(); // Fecha o modal após sucesso.
@@ -175,7 +168,7 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
     }
   }
 
-  // Helper para exibir SnackBar (renomeado para português)
+  // Helper para exibir SnackBar
   void _mostrarSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -225,9 +218,9 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
           children: [
             // Título do Modal (Adicionar ou Editar)
             Text(
-              widget.despesaParaEditar == null
-                  ? 'Registrar Nova Despesa'
-                  : 'Editar Despesa',
+              widget.receitaParaEditar == null
+                  ? 'Registrar Nova Receita'
+                  : 'Editar Receita',
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -239,44 +232,41 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
 
             // Campo Descrição
             ClearField(
-              label: 'Descrição (ex: Conta de Luz)', // Label em português
-              controller: _descricaoController, // Controlador em português
+              label: 'Descrição (ex: Salário Mensal)',
+              controller: _descricaoController,
               onLimpar: () => setState(() => _descricaoController.clear()),
               maxLines: 1,
               keyboardType: TextInputType.text,
               decoration: inputDecoration.copyWith(
                 prefixIcon: const Icon(Icons.description),
-                labelText: 'Descrição (ex: Conta de Luz)', // Label em português
+                labelText: 'Descrição',
               ),
             ),
             const SizedBox(height: 16),
 
             // Campo Valor
             ClearField(
-              label: 'Valor (ex: 150,75)', // Label em português
-              controller: _valorController, // Controlador em português
+              label: 'Valor (ex: 1500,00)',
+              controller: _valorController,
               onLimpar: () => setState(() => _valorController.clear()),
               maxLines: 1,
-              keyboardType: TextInputType.numberWithOptions(
-                decimal: true,
-              ), // Teclado numérico com decimal
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
               decoration: inputDecoration.copyWith(
                 prefixIcon: const Icon(Icons.attach_money),
-                labelText: 'Valor (ex: 150,75)', // Label em português
-              ), // Ícone de dinheiro
+                labelText: 'Valor (ex: 1500,00)'
+              ),
             ),
             const SizedBox(height: 16),
 
             // Dropdown Categoria
             DropdownButtonFormField<String>(
-              value: _categoriaSelecionada, // Variável em português
+              value: _categoriaSelecionada,
               decoration: inputDecoration.copyWith(
-                labelText: 'Categoria', // Label em português
+                labelText: 'Categoria',
                 prefixIcon: const Icon(Icons.category),
               ),
               items:
                   _categorias.map((String categoria) {
-                    // Lista de categorias em português
                     return DropdownMenuItem<String>(
                       value: categoria,
                       child: Text(categoria),
@@ -284,8 +274,7 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
                   }).toList(),
               onChanged: (String? novoValor) {
                 setState(() {
-                  _categoriaSelecionada =
-                      novoValor!; // Atualiza variável em português
+                  _categoriaSelecionada = novoValor!;
                 });
               },
             ),
@@ -293,25 +282,22 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
 
             // Campo de Data (com DatePicker)
             GestureDetector(
-              onTap:
-                  () => _selecionarData(context), // Abre o DatePicker ao tocar
+              onTap: () => _selecionarData(context),
               child: AbsorbPointer(
-                // Impede que o TextField receba foco diretamente
                 child: ClearField(
-                  label: 'Data da Despesa', // Label em português
+                  label: 'Data da Receita',
                   controller: TextEditingController(
-                    // Cria um controlador apenas para exibição da data formatada
                     text: DateFormat(
                       'dd/MM/yyyy',
                       'pt_BR',
                     ).format(_dataSelecionada),
                   ),
                   onLimpar: () {
-                    // Não faz sentido limpar a data, então não há ação para onLimpar
+                    /* Não faz sentido limpar a data */
                   },
                   maxLines: 1,
                   decoration: inputDecoration.copyWith(
-                    labelText: 'Data da Despesa',
+                    labelText: 'Data da Receita',
                     prefixIcon: const Icon(Icons.calendar_today),
                   ),
                 ),
@@ -321,10 +307,7 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
 
             // Botão Salvar
             ElevatedButton.icon(
-              onPressed:
-                  _isLoading
-                      ? null
-                      : _handleSalvarDespesa, // Desabilita enquanto carrega
+              onPressed: _isLoading ? null : _handleSalvarReceita,
               icon:
                   _isLoading
                       ? const SizedBox(
@@ -336,24 +319,18 @@ class _AddEditExpenseModalState extends State<AddEditExpenseModal> {
                         ),
                       )
                       : const Icon(Icons.save),
-              label: Text(
-                widget.despesaParaEditar == null
-                    ? 'Salvar Despesa'
-                    : 'Salvar Alterações', // Labels em português
-                style: const TextStyle(fontSize: 18, color: Colors.white),
+              label: const Text(
+                'Salvar Receita',
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Theme.of(
-                      context,
-                    ).colorScheme.primary, // Usa a cor primária do tema
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
-            const SizedBox(height: 16), // Espaçamento extra abaixo do botão
           ],
         ),
       ),

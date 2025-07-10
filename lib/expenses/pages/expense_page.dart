@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Para StreamBuilder e Timestamp
+import 'package:flutter_gestor_habitos/expenses/models/expenses_model.dart';
+import 'package:flutter_gestor_habitos/expenses/pages/add_edit_expense_modal.dart';
 import 'package:intl/intl.dart'; // Para formatar datas
 import 'package:firebase_auth/firebase_auth.dart'; // Para obter o ID do usuário
 
 import '../models/expenses_model.dart'; // Importe o DespesaModel
+import '../pages/add_edit_expense_modal.dart'; // Importe o modal de adicionar/editar despesa
 import '../service/expense_service.dart'; // Importe o ExpenseService
-import 'add_edit_expense_modal.dart'; // Importe o modal de adicionar/editar despesa
 
 class ExpensesPage extends StatefulWidget {
   const ExpensesPage({super.key});
@@ -173,6 +175,22 @@ class _ExpensesPageState extends State<ExpensesPage> {
           }
 
           final docs = snapshot.data?.docs ?? [];
+          // Converte os documentos em uma lista de DespesaModel
+          final List<DespesaModel> despesas =
+              docs
+                  .map(
+                    (doc) => DespesaModel.fromMap(
+                      doc.id,
+                      doc.data() as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList();
+
+          // Calcula o total das despesas
+          final double totalDespesas = despesas.fold(
+            0.0,
+            (sum, item) => sum + item.valor,
+          );
 
           if (docs.isEmpty) {
             // Mensagem de estado vazio se não houver despesas
@@ -196,131 +214,184 @@ class _ExpensesPageState extends State<ExpensesPage> {
             );
           }
 
-          // Lista de despesas
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              // Cria uma instância de DespesaModel a partir dos dados do Firestore
-              final DespesaModel despesa = DespesaModel.fromMap(doc.id, data);
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: InkWell(
-                  onTap:
-                      () => _mostrarEditExpenseModal(
-                        context,
-                        despesa,
-                      ), // Abre modal para edição
+          return Column(
+            // Usa Column para poder adicionar o card do total acima da lista
+            children: [
+              // Card do Total das Despesas
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  color: Colors.red.shade700, // Cor de destaque para despesas
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                despesa.descricao, // Usa o modelo
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                overflow:
-                                    TextOverflow
-                                        .ellipsis, // Lida com descrições longas
-                              ),
-                            ),
-                            Text(
-                              'R\$ ${despesa.valor.toStringAsFixed(2).replaceAll('.', ',')}', // Formata valor para moeda
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.redAccent, // Despesa em vermelho
-                              ),
-                            ),
-                          ],
+                        const Text(
+                          'Total de Despesas:',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            Chip(
-                              label: Text(despesa.categoria), // Usa o modelo
-                              backgroundColor: Colors.orange.shade50,
-                              labelStyle: TextStyle(
-                                color: Colors.orange.shade700,
-                                fontSize: 12,
-                              ),
-                              side: BorderSide(color: Colors.orange.shade200),
-                            ),
-                            Chip(
-                              label: Text(
-                                _formatarData(
-                                  despesa.dataCriacao != null
-                                      ? Timestamp.fromDate(despesa.dataCriacao!)
-                                      : null,
-                                ),
-                              ), // Usa o modelo e formata
-                              backgroundColor: Colors.grey.shade100,
-                              labelStyle: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 12,
-                              ),
-                              side: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Ícones de ação dentro do card
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.blue,
-                                ),
-                                onPressed:
-                                    () => _mostrarEditExpenseModal(
-                                      context,
-                                      despesa,
-                                    ), // Abre o modal de edição
-                                tooltip: 'Editar Despesa',
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed:
-                                    () => _confirmarExclusaoDespesa(
-                                      context,
-                                      despesa.id,
-                                      despesa.descricao,
-                                    ), // Chama a função de exclusão
-                                tooltip: 'Excluir Despesa',
-                              ),
-                            ],
+                        Text(
+                          'R\$ ${totalDespesas.toStringAsFixed(2).replaceAll('.', ',')}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+              // Lista de despesas (Expanded para ocupar o espaço restante)
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                  ), // Apenas lateral, já tem padding no total
+                  itemCount: despesas.length,
+                  itemBuilder: (context, index) {
+                    final DespesaModel despesa =
+                        despesas[index]; // Pega o DespesaModel diretamente
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        onTap:
+                            () => _mostrarEditExpenseModal(
+                              context,
+                              despesa,
+                            ), // Abre modal para edição
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      despesa.descricao, // Usa o modelo
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow:
+                                          TextOverflow
+                                              .ellipsis, // Lida com descrições longas
+                                    ),
+                                  ),
+                                  Text(
+                                    'R\$ ${despesa.valor.toStringAsFixed(2).replaceAll('.', ',')}', // Formata valor para moeda
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Colors
+                                              .redAccent, // Despesa em vermelho
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  Chip(
+                                    label: Text(
+                                      despesa.categoria,
+                                    ), // Usa o modelo
+                                    backgroundColor: Colors.orange.shade50,
+                                    labelStyle: TextStyle(
+                                      color: Colors.orange.shade700,
+                                      fontSize: 12,
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.orange.shade200,
+                                    ),
+                                  ),
+                                  Chip(
+                                    label: Text(
+                                      _formatarData(
+                                        despesa.dataCriacao != null
+                                            ? Timestamp.fromDate(
+                                              despesa.dataCriacao!,
+                                            )
+                                            : null,
+                                      ),
+                                    ), // Usa o modelo e formata
+                                    backgroundColor: Colors.grey.shade100,
+                                    labelStyle: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 12,
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Ícones de ação dentro do card
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed:
+                                          () => _mostrarEditExpenseModal(
+                                            context,
+                                            despesa,
+                                          ), // Abre o modal de edição
+                                      tooltip: 'Editar Despesa',
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed:
+                                          () => _confirmarExclusaoDespesa(
+                                            context,
+                                            despesa.id,
+                                            despesa.descricao,
+                                          ), // Chama a função de exclusão
+                                      tooltip: 'Excluir Despesa',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

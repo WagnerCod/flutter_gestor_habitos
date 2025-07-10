@@ -134,21 +134,21 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const SizedBox(height: 20),
               // Botão de voltar, alinhado ao topo à esquerda
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    // Verifica se há rotas para voltar, caso contrário, exibe uma mensagem
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    } else {
-                      _showSnackBar('Esta é a primeira tela.', Colors.grey);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
+              // Align(
+              //   alignment: Alignment.topLeft,
+              //   child: IconButton(
+              //     icon: const Icon(Icons.arrow_back, color: Colors.white),
+              //     onPressed: () {
+              //       // Verifica se há rotas para voltar, caso contrário, exibe uma mensagem
+              //       if (Navigator.of(context).canPop()) {
+              //         Navigator.of(context).pop();
+              //       } else {
+              //         _showSnackBar('Esta é a primeira tela.', Colors.grey);
+              //       }
+              //     },
+              //   ),
+              // ),
+              // const SizedBox(height: 10),
               // Título principal da página de login
               const Text(
                 'Faça sua conta ou entre para organizar seus hábitos',

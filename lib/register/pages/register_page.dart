@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Importe o Firebase Auth
 import '../../home/pages/home_page.dart'; // Certifique-se de que o caminho para HomePage está correto
@@ -86,6 +87,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // Se o registro for bem-sucedido, exibe uma mensagem e navega para a HomePage
       if (userCredential.user != null) {
+        // SALVAR DADOS DO USUÁRIO NO FIRESTORE AQUI
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(userCredential.user!.uid)
+            .set({
+              'email': userCredential.user!.email,
+              'nomeUsuario':
+                  _emailController.text.split('@',
+                  )[0], // Nome de usuário inicial (parte do email antes do @)
+              'dataCadastro': FieldValue.serverTimestamp(),
+              'fotoPerfilUrl': null, // Inicializa sem foto
+            });
+
         _showSnackBar('Usuário registrado com sucesso!', Colors.green);
         // Usa pushReplacement para que o usuário não possa voltar para a tela de registro
         Navigator.pushReplacement(

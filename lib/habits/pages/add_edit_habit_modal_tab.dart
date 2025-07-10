@@ -213,6 +213,7 @@ class _AddEditHabitModalState extends State<AddEditHabitModal> {
               keyboardType: TextInputType.text,
               decoration: inputDecoration.copyWith(
                 prefixIcon: const Icon(Icons.title),
+                labelText: 'Título', // Label em português
               ),
             ),
             const SizedBox(height: 16),
@@ -226,6 +227,7 @@ class _AddEditHabitModalState extends State<AddEditHabitModal> {
               keyboardType: TextInputType.multiline,
               decoration: inputDecoration.copyWith(
                 prefixIcon: const Icon(Icons.description),
+                labelText: 'Descrição', // Label em português
               ),
             ),
             const SizedBox(height: 16),
@@ -264,6 +266,7 @@ class _AddEditHabitModalState extends State<AddEditHabitModal> {
               keyboardType: TextInputType.text,
               decoration: inputDecoration.copyWith(
                 prefixIcon: const Icon(Icons.track_changes),
+                labelText: 'Meta (opcional - ex: 2000 ml, 3 livros'
               ),
             ),
             const SizedBox(height: 32),

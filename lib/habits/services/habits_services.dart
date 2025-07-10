@@ -17,8 +17,6 @@ class HabitService {
     required String descricao,
     required String frequencia,
     String? meta,
-    String? corHex,
-    String? emoji,
     DateTime? ultimaConclusao, // Usar DateTime aqui para consistência
   }) async {
     try {
@@ -38,7 +36,6 @@ class HabitService {
         feitoHoje: false, // Hábito novo sempre começa como não feito hoje
         dataCriacao: DateTime.now(), // Define data de criação no modelo
         usuarioId: usuarioId, // Garante que o usuarioId seja passado
-        corHex: corHex,
         ultimaConclusao: ultimaConclusao,
       );
 

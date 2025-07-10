@@ -10,7 +10,6 @@ class HabitoModel {
   final DateTime? dataCriacao; // Data de criação do hábito
   final String? meta; // Meta opcional (ex: "2000 ml de água")
   final String usuarioId; // ID do usuário associado ao hábito
-  final String? corHex; // Cor em formato hexadecimal (ex: '#4CAF50')
   final DateTime? ultimaConclusao; // Data da última conclusão do hábito
 
   HabitoModel({
@@ -22,7 +21,6 @@ class HabitoModel {
     this.dataCriacao,
     this.meta,
     required this.usuarioId, // UsuarioId agora é obrigatório no construtor
-    this.corHex,
     this.ultimaConclusao,
   });
 
@@ -40,7 +38,6 @@ class HabitoModel {
               : FieldValue.serverTimestamp(),
       'meta': meta,
       'usuarioId': usuarioId,
-      'corHex': corHex,
       'ultimaConclusao':
           ultimaConclusao != null ? Timestamp.fromDate(ultimaConclusao!) : null,
     };
@@ -57,7 +54,6 @@ class HabitoModel {
       dataCriacao: (map['dataCriacao'] as Timestamp?)?.toDate(),
       meta: map['meta'],
       usuarioId: map['usuarioId'] ?? '', // Garante que usuarioId não seja nulo
-      corHex: map['corHex'],
       ultimaConclusao: (map['ultimaConclusao'] as Timestamp?)?.toDate(),
     );
   }
@@ -72,7 +68,6 @@ class HabitoModel {
     DateTime? dataCriacao,
     String? meta,
     String? usuarioId,
-    String? corHex,
     DateTime? ultimaConclusao,
   }) {
     return HabitoModel(
@@ -84,7 +79,6 @@ class HabitoModel {
       dataCriacao: dataCriacao ?? this.dataCriacao,
       meta: meta ?? this.meta,
       usuarioId: usuarioId ?? this.usuarioId,
-      corHex: corHex ?? this.corHex,
       ultimaConclusao: ultimaConclusao ?? this.ultimaConclusao,
     );
   }
